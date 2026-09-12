@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Hospital Management",
+            "request": "launch",
+            "type": "chrome",
+            "url": "http://127.0.0.1:5500/",
+            "webRoot": "${workspaceFolder}",
+            "preLaunchTask": "PHP: Start built-in server"
+        },
+        {
+            "name": "Hospital Management (Edge)",
+            "request": "launch",
+            "type": "msedge",
+            "url": "http://127.0.0.1:5500/",
+            "webRoot": "${workspaceFolder}",
+            "preLaunchTask": "PHP: Start built-in server"
+        }
+    ]
+}

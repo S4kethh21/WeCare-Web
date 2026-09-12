@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+
+# Local database and runtime artifacts
+*.log
+*.sql.bak
+uploads/
+
+# Editor and OS files
+.DS_Store
+Thumbs.db

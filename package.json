@@ -1,0 +1,19 @@
+{
+  "name": "hospital-management-system",
+  "version": "1.0.0",
+  "description": "WeCare Hospital Patient-Facing Appointment Platform (PHP & MySQL)",
+  "main": "index.php",
+  "scripts": {
+    "dev": "run-php-server.bat",
+    "start": "run-php-server.bat",
+    "serve": "serve.bat",
+    "serve:ps": "powershell -ExecutionPolicy Bypass -File ./serve.ps1"
+  },
+  "keywords": [
+    "hospital-management",
+    "php",
+    "mysql"
+  ],
+  "author": "",
+  "license": "ISC"
+}
