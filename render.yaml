@@ -7,12 +7,12 @@ services:
     plan: free
     region: oregon
     branch: main
-    healthCheckPath: /
+    healthCheckPath: /healthz.php
     envVars:
       - key: DB_HOST
         sync: false
       - key: DB_PORT
-        sync: false
+        value: "3306"
       - key: DB_USER
         sync: false
       - key: DB_PASSWORD

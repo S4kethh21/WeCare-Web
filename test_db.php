@@ -9,20 +9,27 @@ header('Content-Type: text/plain; charset=UTF-8');
 
 echo "=== WeCare Hospital Database Diagnostic ===\n\n";
 
-$dbHost = getenv('DB_HOST') ?: getenv('MYSQL_HOST') ?: getenv('MYSQLHOST') ?: '';
-$dbPort = (int) (getenv('DB_PORT') ?: getenv('MYSQL_PORT') ?: getenv('MYSQLPORT') ?: 3306);
-$dbUser = getenv('DB_USER') ?: getenv('MYSQL_USER') ?: getenv('MYSQLUSER') ?: '';
-$dbName = getenv('DB_NAME') ?: getenv('MYSQL_DATABASE') ?: getenv('MYSQLDATABASE') ?: '';
-$hasPassword = (getenv('DB_PASSWORD') !== false && getenv('DB_PASSWORD') !== '') ||
-               (getenv('MYSQL_PASSWORD') !== false && getenv('MYSQL_PASSWORD') !== '');
+$isProduction = (getenv('RENDER') !== false) ||
+                (getenv('RENDER_SERVICE_ID') !== false) ||
+                (getenv('APP_ENV') === 'production') ||
+                (file_exists('/.dockerenv')) ||
+                (!empty(getenv('DB_HOST')) && !in_array(strtolower((string)getenv('DB_HOST')), ['localhost', '127.0.0.1', '::1'], true));
 
-$isCloud = !empty($dbHost) && !in_array(strtolower($dbHost), ['127.0.0.1', 'localhost', '::1'], true);
+$dbHost = getenv('DB_HOST') ?: '';
+$dbPort = (int) (getenv('DB_PORT') ?: 3306);
+$dbUser = getenv('DB_USER') ?: '';
+$dbName = getenv('DB_NAME') ?: '';
+$hasPassword = (getenv('DB_PASSWORD') !== false && getenv('DB_PASSWORD') !== '');
 
-echo "Deployment Mode    : " . ($isCloud ? "Cloud Production (Render)" : "Local Development (XAMPP)") . "\n";
-echo "Configured Host    : " . ($dbHost !== '' ? htmlspecialchars($dbHost) : "[Default local fallback: 127.0.0.1]") . "\n";
+echo "Deployment Mode    : " . ($isProduction ? "Production (Render)" : "Local Development (XAMPP)") . "\n";
+if ($isProduction) {
+    echo "Configured Host    : " . ($dbHost !== '' ? htmlspecialchars($dbHost) : "[Not set — Configure DB_HOST in Render]") . "\n";
+} else {
+    echo "Configured Host    : " . ($dbHost !== '' ? htmlspecialchars($dbHost) : "[Local default: 127.0.0.1]") . "\n";
+}
 echo "Configured Port    : " . $dbPort . "\n";
-echo "Configured Database: " . ($dbName !== '' ? htmlspecialchars($dbName) : "[Default: hospital_management]") . "\n";
-echo "Configured User    : " . ($dbUser !== '' ? htmlspecialchars($dbUser) : "[Default: root]") . "\n";
+echo "Configured Database: " . ($dbName !== '' ? htmlspecialchars($dbName) : ($isProduction ? "[Not set — Configure DB_NAME in Render]" : "[Default: hospital_management]")) . "\n";
+echo "Configured User    : " . ($dbUser !== '' ? htmlspecialchars($dbUser) : ($isProduction ? "[Not set — Configure DB_USER in Render]" : "[Default: root]")) . "\n";
 echo "Password Provided  : " . ($hasPassword ? "YES (hidden)" : "NO / Empty") . "\n\n";
 
 // Connect through standard db.php handler

@@ -2,12 +2,16 @@
 # Based on official PHP 8.2 with Apache web server
 FROM php:8.2-apache
 
+# Production environment variables
+ENV APP_ENV=production
+ENV RENDER=true
+
 # 1. Install and enable required MySQL and PHP extensions
 RUN docker-php-ext-install mysqli pdo pdo_mysql \
     && docker-php-ext-enable mysqli pdo pdo_mysql
 
 # 2. Enable essential Apache modules and allow .htaccess overrides
-RUN a2enmod rewrite headers mime \
+RUN a2enmod rewrite headers mime dir \
     && sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
 # 3. Configure production PHP settings
@@ -31,7 +35,7 @@ COPY . /var/www/html/
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-# 6. Setup dynamic port entrypoint (Render, Railway, Fly.io, Cloud Run)
+# 6. Setup dynamic port entrypoint (Render Web Service)
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 

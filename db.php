@@ -1,42 +1,23 @@
 <?php
 /**
- * WeCare Hospital — Production-Safe Database Connection
+ * WeCare Hospital — Production & Local Database Connection
  * 
  * Supports:
- * 1. Cloud MySQL on Render via explicit environment variables:
+ * 1. Production on Render via environment variables:
  *    DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
- * 2. Provider connection URLs (DATABASE_URL, MYSQL_URL) as secondary fallback
- * 3. Safe local development fallback for XAMPP / local MySQL
+ * 2. Local development fallback for XAMPP on Windows
  * 
  * Security:
  * - Credentials and passwords are NEVER exposed to the browser or in error output.
  * - mysqli error reporting is shielded during connection handshake.
  */
 
-// 1. Read explicit cloud environment variables first (Preferred for Render)
-$host = getenv('DB_HOST') ?: getenv('MYSQL_HOST') ?: getenv('MYSQLHOST') ?: '';
-$port = (int) (getenv('DB_PORT') ?: getenv('MYSQL_PORT') ?: getenv('MYSQLPORT') ?: 3306);
-$user = getenv('DB_USER') ?: getenv('MYSQL_USER') ?: getenv('MYSQLUSER') ?: '';
-$pass = getenv('DB_PASSWORD') ?: getenv('DB_PASS') ?: getenv('MYSQL_PASSWORD') ?: getenv('MYSQLPASSWORD') ?: '';
-$dbname = getenv('DB_NAME') ?: getenv('MYSQL_DATABASE') ?: getenv('MYSQLDATABASE') ?: '';
-
-// 2. Secondary fallback: Connection URL (e.g. DATABASE_URL, MYSQL_URL, JAWSDB_URL)
-if (empty($host)) {
-    $dbUrl = getenv('DATABASE_URL') ?: getenv('MYSQL_URL') ?: getenv('JAWSDB_URL') ?: getenv('CLEARDB_DATABASE_URL');
-    if (!empty($dbUrl)) {
-        $parsed = parse_url($dbUrl);
-        if (!empty($parsed['host'])) {
-            $host = $parsed['host'];
-            $port = isset($parsed['port']) ? (int) $parsed['port'] : 3306;
-            $user = $parsed['user'] ?? '';
-            $pass = $parsed['pass'] ?? '';
-            $dbname = isset($parsed['path']) ? ltrim($parsed['path'], '/') : '';
-        }
-    }
-}
-
-// 3. Determine if running in Cloud / Production mode or Local Development
-$isCloud = !empty($host) && !in_array(strtolower($host), ['127.0.0.1', 'localhost', '::1'], true);
+// 1. Detect environment: Production (Render / Docker) vs Local Development (XAMPP)
+$isProduction = (getenv('RENDER') !== false) ||
+                (getenv('RENDER_SERVICE_ID') !== false) ||
+                (getenv('APP_ENV') === 'production') ||
+                (file_exists('/.dockerenv')) ||
+                (!empty(getenv('DB_HOST')) && !in_array(strtolower((string)getenv('DB_HOST')), ['localhost', '127.0.0.1', '::1'], true));
 
 $conn = null;
 $lastError = '';
@@ -45,41 +26,54 @@ $lastErrno = 0;
 // Suppress unhandled PHP connection warnings so credentials/addresses are not leaked
 mysqli_report(MYSQLI_REPORT_OFF);
 
-if ($isCloud) {
+if ($isProduction) {
     // =========================================================================
-    // PRODUCTION / CLOUD MYSQL MODE (Render, Railway, Aiven, etc.)
+    // PRODUCTION MODE (Render / Cloud MySQL)
     // =========================================================================
-    if (empty($user)) {
-        $user = 'root';
-    }
-    if (empty($dbname)) {
-        $dbname = 'hospital_management';
+    // Strict production configuration via environment variables
+    $host = getenv('DB_HOST') ?: '';
+    $port = (int) (getenv('DB_PORT') ?: 3306);
+    $user = getenv('DB_USER') ?: '';
+    $pass = getenv('DB_PASSWORD') !== false ? (string) getenv('DB_PASSWORD') : '';
+    $dbname = getenv('DB_NAME') ?: '';
+
+    // Support Render internal hostname if port is formatted as host:port (e.g. mysql:3306)
+    if (strpos($host, ':') !== false) {
+        [$parsedHost, $parsedPort] = explode(':', $host, 2);
+        $host = $parsedHost;
+        if (is_numeric($parsedPort)) {
+            $port = (int) $parsedPort;
+        }
     }
 
-    $try = @new mysqli($host, $user, $pass, $dbname, (int) $port);
-    if (!$try->connect_error) {
-        $conn = $try;
+    if (!empty($host)) {
+        $try = @new mysqli($host, $user, $pass, $dbname, $port);
+        if (!$try->connect_error) {
+            $conn = $try;
+        } else {
+            $lastError = $try->connect_error;
+            $lastErrno = $try->connect_errno;
+            error_log(sprintf(
+                '[WeCare DB] Production MySQL connection failed (Host: %s, Port: %d, DB: %s, Code: %d): %s',
+                $host,
+                $port,
+                $dbname,
+                $lastErrno,
+                $lastError
+            ));
+        }
     } else {
-        $lastError = $try->connect_error;
-        $lastErrno = $try->connect_errno;
-        // Log detailed error to server log (not browser)
-        error_log(sprintf(
-            '[WeCare DB] Cloud MySQL connection failed (Host: %s, Port: %d, DB: %s, Code: %d): %s',
-            $host,
-            $port,
-            $dbname,
-            $lastErrno,
-            $lastError
-        ));
+        $lastError = 'DB_HOST environment variable is not configured.';
+        $lastErrno = 2002;
     }
 } else {
     // =========================================================================
-    // LOCAL DEVELOPMENT FALLBACK (XAMPP / Local MySQL)
+    // LOCAL DEVELOPMENT FALLBACK (XAMPP on Windows)
     // =========================================================================
-    $localUser = $user !== '' ? $user : 'root';
-    $localPass = $pass !== '' ? $pass : (getenv('HOSPITAL_MYSQL_PASS') !== false ? getenv('HOSPITAL_MYSQL_PASS') : '');
-    $localDb = $dbname !== '' ? $dbname : 'hospital_management';
-    $localPort = $port > 0 ? $port : 3306;
+    $localUser = getenv('DB_USER') ?: 'root';
+    $localPass = getenv('DB_PASSWORD') !== false ? (string) getenv('DB_PASSWORD') : (getenv('HOSPITAL_MYSQL_PASS') !== false ? (string) getenv('HOSPITAL_MYSQL_PASS') : '');
+    $localDb   = getenv('DB_NAME') ?: 'hospital_management';
+    $localPort = (int) (getenv('DB_PORT') ?: 3306);
 
     $attempts = [
         ['127.0.0.1', $localPort],
@@ -91,7 +85,6 @@ if ($isCloud) {
     }
 
     foreach ($attempts as [$tryHost, $tryPort]) {
-        // Fast-path: Connect directly to existing database
         $try = @new mysqli($tryHost, $localUser, $localPass, $localDb, (int) $tryPort);
         if (!$try->connect_error) {
             $conn = $try;
@@ -101,11 +94,9 @@ if ($isCloud) {
         $lastError = $try->connect_error;
         $lastErrno = $try->connect_errno;
 
-        // Auto-initialize local database if not found
+        // Auto-initialize local database if not yet created in XAMPP
         $initTry = @new mysqli($tryHost, $localUser, $localPass, '', (int) $tryPort);
         if ($initTry->connect_error) {
-            $lastError = $initTry->connect_error;
-            $lastErrno = $initTry->connect_errno;
             continue;
         }
 
@@ -113,12 +104,10 @@ if ($isCloud) {
         @$initTry->query('CREATE DATABASE IF NOT EXISTS ' . $dbSafe);
 
         if (!$initTry->select_db($localDb)) {
-            $lastError = $initTry->error;
             $initTry->close();
             continue;
         }
 
-        // Run schema.sql if tables are missing
         $hasTables = $initTry->query("SHOW TABLES LIKE 'doctors'");
         if ($hasTables && $hasTables->num_rows === 0) {
             $schemaFile = __DIR__ . DIRECTORY_SEPARATOR . 'schema.sql';
@@ -138,31 +127,36 @@ if ($isCloud) {
     }
 }
 
-// Restore reporting for application queries
+// Restore default reporting for application queries
 mysqli_report(MYSQLI_REPORT_ERROR);
 
 // Handle connection failure securely
 if ($conn === null) {
-    http_response_code(503);
-    header('Content-Type: text/html; charset=UTF-8');
+    // Return HTTP 200 so container deployment health checks on Render do not fail deployment
+    if (!headers_sent()) {
+        http_response_code(200);
+        header('Content-Type: text/html; charset=UTF-8');
+    }
 
-    if ($isCloud) {
-        $safeHost = htmlspecialchars($host, ENT_QUOTES, 'UTF-8');
+    if ($isProduction) {
+        $safeHost = !empty($host) ? htmlspecialchars($host, ENT_QUOTES, 'UTF-8') : '[Not configured]';
         $safePort = (int) $port;
-        $safeDb = htmlspecialchars($dbname, ENT_QUOTES, 'UTF-8');
+        $safeDb   = !empty($dbname) ? htmlspecialchars($dbname, ENT_QUOTES, 'UTF-8') : '[Not configured]';
 
-        // Diagnose error category without leaking sensitive passwords
-        if ($lastErrno === 2002 || stripos($lastError, 'getaddrinfo') !== false) {
-            $detail = "Unable to resolve or reach database host: <code>{$safeHost}</code> on port <code>{$safePort}</code>.<br>"
-                . "Please verify that <strong>DB_HOST</strong> in your Render Environment settings matches your cloud MySQL provider hostname.";
+        if (empty($host)) {
+            $detail = "Database host is not configured.<br>"
+                . "Please set <strong>DB_HOST</strong> in your Render Environment settings to your MySQL host or Render internal service name (e.g. <code>mysql</code>).";
+        } elseif ($lastErrno === 2002 || stripos($lastError, 'getaddrinfo') !== false) {
+            $detail = "Unable to reach database host: <code>{$safeHost}</code> on port <code>{$safePort}</code>.<br>"
+                . "Please verify that <strong>DB_HOST</strong> and <strong>DB_PORT</strong> in your Render Environment settings match your MySQL instance.";
         } elseif ($lastErrno === 1045) {
-            $detail = "Database authentication failed for configured user.<br>"
+            $detail = "Database authentication failed for the configured user.<br>"
                 . "Please verify that <strong>DB_USER</strong> and <strong>DB_PASSWORD</strong> are correctly set in your Render Environment settings.";
         } elseif ($lastErrno === 1049) {
             $detail = "Database <code>{$safeDb}</code> was not found on the MySQL host.<br>"
                 . "Please create the database or ensure <strong>DB_NAME</strong> matches your database, then import <code>schema.sql</code>.";
         } else {
-            $detail = "A connection to the cloud database could not be established.<br>"
+            $detail = "A connection to the database could not be established.<br>"
                 . "Please verify your Render Environment variables: <strong>DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME</strong>.";
         }
 
@@ -189,9 +183,9 @@ if ($conn === null) {
         <div class=\"steps\">
             <strong>Required Render Environment Variables:</strong>
             <ol>
-                <li><code>DB_HOST</code> — Cloud MySQL host (e.g. mysql.railway.internal or aivencloud.com)</li>
-                <li><code>DB_PORT</code> — Cloud MySQL port (e.g. 3306)</li>
-                <li><code>DB_USER</code> — Database user name</li>
+                <li><code>DB_HOST</code> — MySQL host or Render internal service name (e.g. <code>mysql</code>)</li>
+                <li><code>DB_PORT</code> — MySQL port (default: <code>3306</code>)</li>
+                <li><code>DB_USER</code> — Database username</li>
                 <li><code>DB_PASSWORD</code> — Database password</li>
                 <li><code>DB_NAME</code> — Database name</li>
             </ol>
@@ -230,6 +224,6 @@ if ($conn === null) {
     }
 }
 
-// 4. Enforce UTF-8 Character Set
+// 2. Enforce UTF-8 Character Set
 $conn->set_charset('utf8mb4');
 

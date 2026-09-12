@@ -1,7 +1,7 @@
 -- WeCare Hospital - Full Database Schema & Seed Data
--- Compatible with Cloud MySQL (Render, Railway, Aiven) and Local MySQL (XAMPP)
+-- Compatible with Render MySQL and Local MySQL (XAMPP)
 
--- Note for Cloud MySQL: If your cloud provider already created your database (e.g. 'railway' or 'defaultdb'),
+-- Note for MySQL: If your provider already created your database,
 -- simply import this script directly into that database.
 
 CREATE TABLE IF NOT EXISTS `patients` (

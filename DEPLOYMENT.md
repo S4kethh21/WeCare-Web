@@ -12,40 +12,40 @@ Browser  ───►  Render Web Service (Apache + PHP 8.2 Docker)  ───�
 
 - **Hosting Platform**: Render (Web Service running Docker)
 - **Application Server**: Apache 2.4 + PHP 8.2 (Official Docker container)
-- **Database Engine**: Managed Cloud MySQL (Railway, Aiven, AWS RDS, DigitalOcean, etc.)
+- **Database Engine**: MySQL Database (Render Private Service or Cloud MySQL)
 - **Configuration Mode**: 100% environment-variable driven (Zero hardcoded secrets)
 
 ---
 
 ## 2. Step-by-Step Deployment Instructions
 
-### Step 1: Create a Cloud MySQL Database
-Set up a managed MySQL database on your preferred cloud provider (such as [Railway](https://railway.app), [Aiven](https://aiven.io), [Clever Cloud](https://www.clever-cloud.com), or AWS RDS).
+### Step 1: Prepare Your MySQL Database
+Use your MySQL database (e.g. Render internal MySQL service, Aiven, AWS RDS, or any standard MySQL host).
 
 ### Step 2: Gather Your Database Credentials
-From your cloud provider dashboard, locate and copy the 5 required parameters:
-- **Host**: The public hostname (e.g. `mysql.railway.internal` or `mysql-xxx.aivencloud.com`)
-- **Port**: The port number (typically `3306` or a custom 5-digit port)
-- **User**: The database username (e.g. `root` or `avnadmin`)
+From your MySQL provider dashboard or service settings, obtain:
+- **Host**: The MySQL hostname (e.g. Render internal service name `mysql` or cloud host)
+- **Port**: The port number (default `3306`)
+- **User**: The database username
 - **Password**: The database password
-- **Database Name**: The database name (e.g. `railway` or `defaultdb`)
+- **Database Name**: The database name (e.g. `hospital_management`)
 
 > [!IMPORTANT]
-> Ensure your cloud database allows incoming connections from Render's IP range (or allow `0.0.0.0/0` with SSL enabled).
+> Ensure your database allows connections from your Render Web Service.
 
 ### Step 3: Configure Environment Variables in Render
 1. Go to the [Render Dashboard](https://dashboard.render.com/).
 2. Select your **wecare-hospital** Web Service.
 3. In the left navigation, click **Environment**.
-4. Add the following 5 environment variables:
+4. Add the following environment variables:
 
 | Key | Description | Example / Note |
 |---|---|---|
-| `DB_HOST` | Cloud MySQL Hostname | Obtained from your cloud database |
-| `DB_PORT` | Cloud MySQL Port | Typically `3306` |
-| `DB_USER` | Cloud MySQL Username | Obtained from your cloud database |
-| `DB_PASSWORD` | Cloud MySQL Password | Enter securely in Render |
-| `DB_NAME` | Target Database Name | e.g. `hospital_management` or `railway` |
+| `DB_HOST` | MySQL Hostname | Render internal service name (e.g. `mysql`) or cloud host |
+| `DB_PORT` | MySQL Port | `3306` |
+| `DB_USER` | MySQL Username | e.g. `root` |
+| `DB_PASSWORD` | MySQL Password | Your database password |
+| `DB_NAME` | Target Database Name | e.g. `hospital_management` |
 
 5. Click **Save Changes**.
 
