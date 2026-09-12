@@ -169,7 +169,7 @@ if ($loggedIn) {
 
             <div class="home-hero-right">
                 <div class="home-hero-img-wrap">
-                    <img src="images/home_doctor_banner.jpg" alt="WeCare Hospital Doctors" class="home-hero-img" loading="eager">
+                    <img src="images/home_doctor_banner.jpg" alt="WeCare Hospital Doctors" class="home-hero-img" width="1376" height="768" loading="eager" decoding="async">
                     <div class="hero-floating-badge">
                         <span class="hero-badge-icon" aria-hidden="true">💙</span>
                         <div>
@@ -290,6 +290,8 @@ if ($loggedIn) {
                                 <img src="<?php echo htmlspecialchars($nextAppointment['profile_image']); ?>" 
                                      alt="<?php echo htmlspecialchars($nextAppointment['doctor_name']); ?>" 
                                      class="upcoming-doc-img"
+                                     width="896" height="1200"
+                                     loading="lazy" decoding="async"
                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                 <div class="upcoming-avatar-circle" style="display: none;"><?php echo htmlspecialchars($docInitials); ?></div>
                             <?php else: ?>

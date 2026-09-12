@@ -220,7 +220,7 @@ if ($doctors) {
                 <a href="#doctors-directory-grid" class="btn btn-banner-learn">Learn More</a>
             </div>
             <div class="banner-visual-side">
-                <img src="images/stethoscope_banner.jpg" alt="Clinical Stethoscope" class="banner-stethoscope-img">
+                <img src="images/stethoscope_banner.jpg" alt="Clinical Stethoscope" class="banner-stethoscope-img" width="1376" height="768" loading="eager" decoding="async">
             </div>
         </section>
 
@@ -314,7 +314,8 @@ if ($doctors) {
                                      alt="<?php echo htmlspecialchars($row['doctor_name']); ?>" 
                                      class="doctor-card-img doc-img-<?php echo $docId; ?>" 
                                      style="object-position: <?php echo $imgPos; ?>;"
-                                     loading="lazy"
+                                     width="896" height="1200"
+                                     loading="lazy" decoding="async"
                                      onerror="this.style.display='none'; if (this.nextElementSibling) this.nextElementSibling.style.display='flex';">
                                 <div class="doctor-card-avatar" style="display: none;" aria-hidden="true"><?php echo htmlspecialchars($initials); ?></div>
 

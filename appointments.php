@@ -533,7 +533,7 @@ $activeTab = ($viewMode === 'my_appointments') ? 'my_appointments' : 'booking';
                 <!-- Right: Friendly Assistance Card (Matching Reference Mockup) -->
                 <aside class="appointment-help-card panel">
                     <div class="help-graphic-wrap">
-                        <img src="images/appointment_help_doctor.jpg" alt="WeCare Appointment Support" class="help-doctor-avatar-img">
+                        <img src="images/appointment_help_doctor.jpg" alt="WeCare Appointment Support" class="help-doctor-avatar-img" width="1024" height="1024" loading="lazy" decoding="async">
                     </div>
                     <div class="help-card-content">
                         <h3>We're here to help</h3>
@@ -602,6 +602,8 @@ $activeTab = ($viewMode === 'my_appointments') ? 'my_appointments' : 'booking';
                                                 <img src="<?php echo htmlspecialchars($img); ?>" 
                                                      alt="<?php echo htmlspecialchars($apt['doctor_name']); ?>" 
                                                      class="appt-thumb-img"
+                                                     width="896" height="1200"
+                                                     loading="lazy" decoding="async"
                                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                                 <div class="appt-thumb-fallback" style="display: none;"><?php echo htmlspecialchars($docInitials); ?></div>
                                             </div>
@@ -694,6 +696,8 @@ $activeTab = ($viewMode === 'my_appointments') ? 'my_appointments' : 'booking';
                                                 <img src="<?php echo htmlspecialchars($img); ?>" 
                                                      alt="<?php echo htmlspecialchars($apt['doctor_name']); ?>" 
                                                      class="appt-thumb-img"
+                                                     width="896" height="1200"
+                                                     loading="lazy" decoding="async"
                                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                                 <div class="appt-thumb-fallback" style="display: none;"><?php echo htmlspecialchars($docInitials); ?></div>
                                             </div>
@@ -771,6 +775,8 @@ $activeTab = ($viewMode === 'my_appointments') ? 'my_appointments' : 'booking';
                                                 <img src="<?php echo htmlspecialchars($img); ?>" 
                                                      alt="<?php echo htmlspecialchars($apt['doctor_name']); ?>" 
                                                      class="appt-thumb-img"
+                                                     width="896" height="1200"
+                                                     loading="lazy" decoding="async"
                                                      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                                 <div class="appt-thumb-fallback" style="display: none;"><?php echo htmlspecialchars($docInitials); ?></div>
                                             </div>

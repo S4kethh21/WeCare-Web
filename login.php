@@ -232,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <!-- Anchored Hospital Photograph -->
                 <div class="brand-hospital-photo-anchor">
-                    <img src="images/hospital_hero.png" alt="WeCare Hospital Campus" class="hospital-anchor-img" loading="eager">
+                    <img src="images/hospital_hero.png" alt="WeCare Hospital Campus" class="hospital-anchor-img" width="750" height="525" loading="eager" decoding="async">
                     <div class="hospital-photo-gradient-fade" aria-hidden="true"></div>
                 </div>
             </aside>
