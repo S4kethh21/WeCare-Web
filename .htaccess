@@ -1,0 +1,43 @@
+# WeCare Hospital — Apache Web Server Configuration
+# Ensures PHP files are properly executed, index.php is loaded at root, and sensitive files are protected.
+
+# 1. Default Index File
+DirectoryIndex index.php index.html
+
+# 2. Force PHP Execution (Prevents PHP files from downloading as plain text/files)
+<IfModule mod_mime.c>
+    AddType application/x-httpd-php .php .phtml
+    AddHandler application/x-httpd-php .php
+</IfModule>
+
+# 3. Security: Block Access to Sensitive Files & Configuration
+<FilesMatch "^(\.env|\.git|schema\.sql|ensure-mysql\.bat|run-php-server\.bat|serve\.bat|serve\.ps1|Dockerfile|docker-entrypoint\.sh|render\.yaml|railway\.json|\.vscode)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# 4. Disable Directory Browsing
+Options -Indexes
+
+# 5. Enable URL Rewriting & Clean Routing
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Ensure root loads index.php
+    RewriteRule ^$ index.php [L]
+
+    # If the requested file or directory exists, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+</IfModule>
+
+# 6. Default Charset & Security Headers
+AddDefaultCharset UTF-8
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>

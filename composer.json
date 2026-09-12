@@ -1,0 +1,12 @@
+{
+  "name": "s4kethh21/wecare-hospital",
+  "description": "WeCare Hospital Patient Portal & Clinical Management System",
+  "type": "project",
+  "require": {
+    "php": "^8.0 || ^8.1 || ^8.2 || ^8.3",
+    "ext-mysqli": "*",
+    "ext-pdo": "*",
+    "ext-pdo_mysql": "*",
+    "ext-session": "*"
+  }
+}

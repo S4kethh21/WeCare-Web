@@ -5,8 +5,9 @@
   "main": "index.php",
   "scripts": {
     "dev": "run-php-server.bat",
-    "start": "run-php-server.bat",
+    "start": "php -S 0.0.0.0:${PORT:-5500} -t .",
     "serve": "serve.bat",
+    "serve:win": "run-php-server.bat",
     "serve:ps": "powershell -ExecutionPolicy Bypass -File ./serve.ps1"
   },
   "keywords": [

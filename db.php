@@ -3,24 +3,35 @@
  * Database connection using MySQLi
  * XAMPP default: root, no password. You can set $pass below or use env HOSPITAL_MYSQL_PASS.
  */
-$user = 'root';
-$pass = '';
-if ($pass === '') {
-    $envPass = getenv('HOSPITAL_MYSQL_PASS');
-    if ($envPass !== false && $envPass !== '') {
-        $pass = $envPass;
-    }
+// 1. Support connection URL (e.g. DATABASE_URL, JAWSDB_URL, CLEARDB_DATABASE_URL, MYSQL_URL)
+$dbUrl = getenv('DATABASE_URL') ?: getenv('JAWSDB_URL') ?: getenv('CLEARDB_DATABASE_URL') ?: getenv('MYSQL_URL');
+if ($dbUrl) {
+    $parsed = parse_url($dbUrl);
+    $host = $parsed['host'] ?? '127.0.0.1';
+    $port = isset($parsed['port']) ? (int) $parsed['port'] : 3306;
+    $user = $parsed['user'] ?? 'root';
+    $pass = $parsed['pass'] ?? '';
+    $dbname = isset($parsed['path']) ? ltrim($parsed['path'], '/') : 'hospital_management';
+} else {
+    // 2. Support individual environment variables with local fallbacks
+    $host = getenv('DB_HOST') ?: getenv('MYSQL_HOST') ?: getenv('MYSQLHOST') ?: '';
+    $port = (int) (getenv('DB_PORT') ?: getenv('MYSQL_PORT') ?: getenv('MYSQLPORT') ?: 3306);
+    $user = getenv('DB_USER') ?: getenv('MYSQL_USER') ?: getenv('MYSQLUSER') ?: 'root';
+    $pass = getenv('DB_PASSWORD') ?: getenv('DB_PASS') ?: getenv('MYSQL_PASSWORD') ?: getenv('MYSQLPASSWORD') ?: (getenv('HOSPITAL_MYSQL_PASS') !== false ? getenv('HOSPITAL_MYSQL_PASS') : '');
+    $dbname = getenv('DB_NAME') ?: getenv('MYSQL_DATABASE') ?: getenv('MYSQLDATABASE') ?: 'hospital_management';
 }
-$dbname = 'hospital_management';
-$port = 3306;
 
-$attempts = [
-    ['127.0.0.1', $port],
-    ['localhost', $port],
-];
-if ((int) $port === 3306) {
-    $attempts[] = ['127.0.0.1', 3307];
-    $attempts[] = ['localhost', 3307];
+$attempts = [];
+if (!empty($host)) {
+    $attempts[] = [$host, $port];
+} else {
+    // Local development auto-discovery (XAMPP / local ports)
+    $attempts[] = ['127.0.0.1', $port];
+    $attempts[] = ['localhost', $port];
+    if ($port === 3306) {
+        $attempts[] = ['127.0.0.1', 3307];
+        $attempts[] = ['localhost', 3307];
+    }
 }
 
 $conn = null;
@@ -48,11 +59,7 @@ foreach ($attempts as $pair) {
     }
 
     $dbSafe = '`' . str_replace('`', '``', $dbname) . '`';
-    if (!$initTry->query('CREATE DATABASE IF NOT EXISTS ' . $dbSafe)) {
-        $lastError = $initTry->error;
-        $initTry->close();
-        continue;
-    }
+    @$initTry->query('CREATE DATABASE IF NOT EXISTS ' . $dbSafe);
 
     if (!$initTry->select_db($dbname)) {
         $lastError = $initTry->error;

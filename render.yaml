@@ -1,0 +1,20 @@
+# Render Blueprint for WeCare Hospital
+# Automatically configures a Docker Web Service (PHP 8.2 + Apache)
+services:
+  - type: web
+    name: wecare-hospital
+    runtime: docker
+    plan: free
+    region: oregon
+    healthCheckPath: /
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_PORT
+        value: "3306"
