@@ -6,8 +6,9 @@ FROM php:8.2-apache
 RUN docker-php-ext-install mysqli pdo pdo_mysql \
     && docker-php-ext-enable mysqli pdo pdo_mysql
 
-# 2. Enable essential Apache modules (mod_rewrite, mod_headers, mod_mime)
-RUN a2enmod rewrite headers mime
+# 2. Enable essential Apache modules and allow .htaccess overrides
+RUN a2enmod rewrite headers mime \
+    && sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
 # 3. Configure production PHP settings
 RUN { \

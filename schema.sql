@@ -1,10 +1,10 @@
--- WeCare Hospital - Database setup
--- Run this in MySQL (phpMyAdmin or mysql CLI) before using the app
+-- WeCare Hospital - Full Database Schema & Seed Data
+-- Compatible with Cloud MySQL (Render, Railway, Aiven) and Local MySQL (XAMPP)
 
-CREATE DATABASE IF NOT EXISTS hospital_management;
-USE hospital_management;
+-- Note for Cloud MySQL: If your cloud provider already created your database (e.g. 'railway' or 'defaultdb'),
+-- simply import this script directly into that database.
 
-CREATE TABLE IF NOT EXISTS patients (
+CREATE TABLE IF NOT EXISTS `patients` (
     id INT AUTO_INCREMENT PRIMARY KEY,
     patient_name VARCHAR(100) NOT NULL,
     age INT NOT NULL,
@@ -13,6 +13,12 @@ CREATE TABLE IF NOT EXISTS patients (
     address TEXT NOT NULL,
     email VARCHAR(100) UNIQUE NULL,
     password VARCHAR(255) NULL,
+    blood_group VARCHAR(10) DEFAULT 'O+',
+    allergies VARCHAR(255) DEFAULT 'No known drug allergies (NKDA)',
+    chronic_conditions VARCHAR(255) DEFAULT 'None reported',
+    emergency_name VARCHAR(100) DEFAULT 'Emergency Contact',
+    emergency_phone VARCHAR(20) DEFAULT '+91 98765 43210',
+    emergency_relation VARCHAR(50) DEFAULT 'Family / Guardian',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -110,3 +116,10 @@ education = VALUES(education),
 working_hours = VALUES(working_hours),
 profile_image = VALUES(profile_image),
 bio = VALUES(bio);
+
+-- Seed Demo Patient Account for Immediate Login
+-- Email: rahul.sharma@gmail.com | Password: password123 (or 123456789)
+INSERT INTO `patients` (`id`, `patient_name`, `age`, `gender`, `phone`, `address`, `email`, `password`, `blood_group`, `allergies`, `chronic_conditions`, `emergency_name`, `emergency_phone`, `emergency_relation`) VALUES
+(3, 'Rahul Sharma', 34, 'Male', '+91 98765 43210', '42 Park Avenue, Mumbai, India', 'rahul.sharma@gmail.com', '$2y$10$KF.m4HBjKT7Qc0wWnqOKbOTaR1945lknpIkgLbt9JpzH8Glq/hOwy', 'O+', 'No known drug allergies (NKDA)', 'None reported', 'Anjali Sharma', '+91 98765 43211', 'Spouse')
+ON DUPLICATE KEY UPDATE `patient_name` = VALUES(`patient_name`);
+
